@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EyeCare – Deteksi Dini Penyakit Mata</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #29B6D5;
+  --primary-dark: #1a8fa8;
+  --primary-light: #e0f7fd;
+  --accent: #81C784;
+  --accent-dark: #4CAF50;
+  --warn: #FFB74D;
+  --danger: #EF5350;
+  --white: #ffffff;
+  --bg: #f0fbfe;
+  --card: #ffffff;
+  --text: #1a2e35;
+  --text-muted: #6b8e97;
+  --border: #c8eef7;
+  --sidebar-bg: #0d2d38;
+  --sidebar-text: #b2dce8;
+  --sidebar-active: #29B6D5;
+  --radius: 18px;
+  --shadow: 0 4px 24px rgba(41,182,213,0.10);
+  --shadow-lg: 0 8px 40px rgba(41,182,213,0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── SPLASH ─────────────────────────────────── */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(145deg, #0d2d38 0%, #1a5068 40%, #29B6D5 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: splashFade 0.5s ease 2.5s forwards;
+}
+@keyframes splashFade { to { opacity:0; pointer-events:none; } }
+
+.splash-logo {
+  width: 110px; height: 110px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 32px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  animation: splashPop 0.7s cubic-bezier(.34,1.56,.64,1) 0.3s both;
+}
+@keyframes splashPop { from { transform: scale(0.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+.splash-logo img { width:90px; height:90px; object-fit:contain; border-radius:20px; }
+
+.splash-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.8rem; color: #fff;
+  letter-spacing: -1px;
+  animation: splashSlide 0.6s ease 0.7s both;
+}
+.splash-sub {
+  font-size: 0.78rem; color: rgba(255,255,255,0.65);
+  text-align: center; max-width: 260px; line-height: 1.6;
+  margin-top: 8px;
+  animation: splashSlide 0.6s ease 0.9s both;
+}
+.splash-tagline {
+  margin-top: 36px;
+  font-size: 1rem; font-weight: 700;
+  color: #81C784;
+  letter-spacing: 0.5px;
+  animation: splashSlide 0.6s ease 1.1s both;
+}
+.splash-dots {
+  display: flex; gap: 8px; margin-top: 40px;
+  animation: splashSlide 0.6s ease 1.3s both;
+}
+.splash-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  animation: dotPulse 1.2s ease infinite;
+}
+.splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+.splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+@keyframes splashSlide { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+/* ─── APP SHELL ───────────────────────────────── */
+#app { display: none; min-height: 100vh; }
+#app.visible { display: flex; }
+
+/* ─── SIDEBAR ─────────────────────────────────── */
+#sidebar {
+  width: 260px; min-height: 100vh;
+  background: var(--sidebar-bg);
+  display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+}
+#sidebar.open { transform: translateX(0); box-shadow: 4px 0 40px rgba(0,0,0,0.35); }
+
+.sidebar-header {
+  padding: 28px 22px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 12px;
+}
+.sidebar-logo { width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+.sidebar-logo img { width:44px; height:44px; object-fit:cover; border-radius:12px; }
+.sidebar-brand { font-family:'DM Serif Display',serif; font-size:1.3rem; color:#fff; letter-spacing:-0.5px; }
+.sidebar-tagline { font-size:0.65rem; color:var(--sidebar-text); margin-top:1px; }
+
+.sidebar-user {
+  padding: 16px 22px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.user-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #81C784);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1rem; color: #fff;
+}
+.user-name { font-size: 0.88rem; font-weight: 700; color: #fff; }
+.user-email { font-size: 0.7rem; color: var(--sidebar-text); }
+
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px; cursor: pointer;
+  color: var(--sidebar-text); font-weight: 600; font-size: 0.9rem;
+  transition: all 0.2s; border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item.active { background: rgba(41,182,213,0.15); color: var(--sidebar-active); border-left-color: var(--sidebar-active); }
+.nav-item svg { width:20px; height:20px; flex-shrink:0; }
+.nav-separator { height:1px; background: rgba(255,255,255,0.06); margin: 8px 22px; }
+
+/* ─── OVERLAY ─────────────────────────────────── */
+#overlay {
+  display: none; position: fixed; inset: 0; z-index: 99;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+}
+#overlay.show { display: block; }
+
+/* ─── MAIN CONTENT ────────────────────────────── */
+#main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ─── TOPBAR ──────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 2px 12px rgba(41,182,213,0.07);
+}
+.hamburger {
+  width: 40px; height: 40px; border: none;
+  background: var(--primary-light); border-radius: 12px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  transition: background 0.2s;
+}
+.hamburger:hover { background: #b2eaf5; }
+.hamburger span { display: block; width: 18px; height: 2px; background: var(--primary-dark); border-radius: 2px; transition: 0.3s; }
+.topbar-title { font-family:'DM Serif Display',serif; font-size:1.2rem; color:var(--text); flex:1; }
+.topbar-badge {
+  background: var(--primary); color: #fff; border-radius: 8px;
+  padding: 4px 12px; font-size: 0.72rem; font-weight: 700;
+}
+
+/* ─── PAGES ───────────────────────────────────── */
+.page { display: none; padding: 24px; flex: 1; }
+.page.active { display: block; }
+
+/* ─── AUTH PAGES ──────────────────────────────── */
+#auth-wrap {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #0d2d38 0%, #1a5068 45%, #1eb8d4 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  background: #fff; border-radius: 28px;
+  width: 100%; max-width: 400px;
+  padding: 40px 36px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  animation: authIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes authIn { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+.auth-logo-icon { width:52px; height:52px; border-radius:14px; overflow:hidden; }
+.auth-logo-icon img { width:52px; height:52px; object-fit:cover; border-radius:14px; }
+.auth-logo-icon svg { width:26px; height:26px; }
+.auth-logo-text { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--text); }
+.auth-title { font-size:1.5rem; font-weight:800; color:var(--text); margin-bottom:6px; }
+.auth-sub { font-size:0.85rem; color:var(--text-muted); margin-bottom:28px; }
+
+.form-group { margin-bottom: 18px; }
+.form-label { display:block; font-size:0.8rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+.form-input {
+  width: 100%; padding: 13px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px; font-family:'Nunito',sans-serif;
+  font-size: 0.92rem; color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none; background: #fff;
+}
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(41,182,213,0.15); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 24px; border: none; border-radius: 12px;
+  font-family:'Nunito',sans-serif; font-weight: 700; font-size: 0.95rem;
+  cursor: pointer; transition: all 0.2s; text-decoration: none;
+}
+.btn-primary { background: var(--primary); color: #fff; width: 100%; }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(41,182,213,0.35); }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%; margin-top: 10px; }
+.btn-outline:hover { background: var(--primary-light); }
+.btn-ghost { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); margin-top: 10px; width: 100%; }
+.btn-ghost:hover { background: rgba(255,255,255,0.2); }
+.btn-sm { padding: 8px 18px; font-size:0.85rem; border-radius:10px; }
+.btn-success { background: var(--accent); color:#fff; }
+.btn-success:hover { background: var(--accent-dark); }
+.btn-danger { background: #fff; color: var(--danger); border: 2px solid var(--danger); }
+
+.auth-switch { text-align:center; margin-top:20px; font-size:0.85rem; color:var(--text-muted); }
+.auth-switch a { color:var(--primary); font-weight:700; cursor:pointer; text-decoration:none; }
+.auth-divider { display:flex; align-items:center; gap:12px; margin:18px 0; }
+.auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.auth-divider span { font-size:0.75rem; color:var(--text-muted); }
+
+/* ─── DASHBOARD ───────────────────────────────── */
+.greeting { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--text); margin-bottom:4px; }
+.greeting-sub { font-size:0.9rem; color:var(--text-muted); margin-bottom:28px; }
+
+.shortcut-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+.shortcut-card {
+  background: var(--card); border-radius:var(--radius); padding:22px 16px;
+  text-align:center; cursor:pointer; border: 2px solid transparent;
+  box-shadow: var(--shadow);
+  transition: all 0.22s; display:flex; flex-direction:column; align-items:center; gap:12px;
+}
+.shortcut-card:hover { border-color:var(--primary); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.shortcut-icon { width:52px; height:52px; border-radius:16px;
+  display:flex; align-items:center; justify-content:center; }
+.shortcut-label { font-size:0.8rem; font-weight:700; color:var(--text); }
+
+.section-title { font-size:1rem; font-weight:800; color:var(--text); margin-bottom:14px; }
+
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:var(--card); border-radius:var(--radius); padding:18px;
+  box-shadow:var(--shadow); display:flex; align-items:center; gap:14px;
+}
+.stat-icon { width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.stat-num { font-size:1.5rem; font-weight:900; color:var(--text); line-height:1; }
+.stat-label { font-size:0.72rem; color:var(--text-muted); font-weight:600; margin-top:2px; }
+
+.info-banner {
+  background: linear-gradient(135deg, #29B6D5, #1a8fa8);
+  border-radius: var(--radius); padding:22px 24px;
+  color: #fff; display:flex; align-items:center; gap:18px; margin-bottom:24px;
+  box-shadow: 0 6px 24px rgba(41,182,213,0.3);
+}
+.info-banner svg { flex-shrink:0; }
+.info-banner-text h3 { font-size:1rem; font-weight:800; margin-bottom:4px; }
+.info-banner-text p { font-size:0.8rem; opacity:0.85; }
+
+/* ─── CARDS ───────────────────────────────────── */
+.card {
+  background: var(--card); border-radius: var(--radius);
+  padding: 22px; box-shadow: var(--shadow); margin-bottom: 18px;
+}
+.card-title { font-size:1rem; font-weight:800; margin-bottom:14px; color:var(--text); }
+
+/* ─── QUIZ ────────────────────────────────────── */
+.quiz-header { margin-bottom:20px; }
+.quiz-progress-wrap { margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+.quiz-progress-label { font-size:0.78rem; font-weight:700; color:var(--text-muted); }
+.progress-bar-bg { background: var(--border); border-radius:99px; height:8px; margin-bottom:16px; }
+.progress-bar-fill { height:8px; border-radius:99px; background:linear-gradient(90deg,var(--primary),#81C784); transition:width 0.5s cubic-bezier(.4,0,.2,1); }
+
+.quiz-category { font-size:0.72rem; font-weight:800; color:var(--primary); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+.quiz-question { font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:24px; line-height:1.5; }
+
+.answer-options { display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
+.answer-btn {
+  padding:14px 18px; border-radius:14px; border:2px solid var(--border);
+  background:#fff; cursor:pointer; font-family:'Nunito',sans-serif;
+  font-size:0.9rem; font-weight:600; color:var(--text);
+  transition:all 0.18s; text-align:left; display:flex; align-items:center; gap:12px;
+}
+.answer-btn:hover { border-color:var(--primary); background:var(--primary-light); }
+.answer-btn.selected { border-color:var(--primary); background:var(--primary); color:#fff; }
+.answer-btn .ans-score { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.2);
+  display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; flex-shrink:0; }
+.answer-btn:not(.selected) .ans-score { background:var(--primary-light); color:var(--primary); }
+
+.quiz-nav { display:flex; gap:12px; }
+.quiz-nav .btn { flex:1; }
+
+/* ─── RESULTS ─────────────────────────────────── */
+.result-hero {
+  background: linear-gradient(135deg, #0d2d38, #1a5068);
+  border-radius: var(--radius); padding:28px; margin-bottom:20px; color:#fff;
+}
+.result-hero-label { font-size:0.72rem; font-weight:800; color:rgba(255,255,255,0.6); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+.result-hero-title { font-family:'DM Serif Display',serif; font-size:1.8rem; margin-bottom:6px; }
+.result-hero-sub { font-size:0.82rem; color:rgba(255,255,255,0.7); }
+
+.disease-result {
+  padding: 16px; border-radius: 14px; margin-bottom:12px;
+  border: 2px solid var(--border); background:#fff;
+  transition: all 0.2s;
+}
+.disease-result.highlight { border-color:var(--primary); background:var(--primary-light); }
+.disease-result-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.disease-name { font-weight:800; font-size:0.95rem; color:var(--text); }
+.disease-pct { font-size:1.1rem; font-weight:900; }
+.disease-bar { height:8px; border-radius:99px; background:var(--border); }
+.disease-bar-fill { height:8px; border-radius:99px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+
+.recommendation-box {
+  background: #fff8e1; border:2px solid #FFB74D; border-radius:var(--radius); padding:18px;
+  display:flex; gap:14px; align-items:flex-start; margin-bottom:20px;
+}
+.recommendation-box svg { flex-shrink:0; margin-top:2px; }
+
+/* ─── EDUCATION ───────────────────────────────── */
+.edu-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.edu-card {
+  background:#fff; border-radius:var(--radius); overflow:hidden;
+  box-shadow:var(--shadow); cursor:pointer; transition:all 0.22s; border:2px solid transparent;
+}
+.edu-card:hover { border-color:var(--primary); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.edu-img { width:100%; height:110px; display:block; overflow:hidden; border-radius:var(--radius) var(--radius) 0 0; }
+.edu-img img { width:100%; height:110px; object-fit:cover; display:block; transition:transform 0.3s; }
+.edu-card:hover .edu-img img { transform:scale(1.06); }
+.edu-detail-img { width:100%; height:200px; border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
+.edu-detail-img img { width:100%; height:200px; object-fit:cover; display:block; }
+.edu-card-body { padding:14px; }
+.edu-card-title { font-size:0.88rem; font-weight:800; color:var(--text); margin-bottom:4px; }
+.edu-card-desc { font-size:0.72rem; color:var(--text-muted); line-height:1.5; }
+
+/* ─── EDU DETAIL ──────────────────────────────── */
+.edu-detail-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.back-btn { width:40px; height:40px; border-radius:12px; border:none; background:var(--primary-light);
+  color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.edu-section { margin-bottom:20px; }
+.edu-section h3 { font-size:0.88rem; font-weight:800; color:var(--primary); margin-bottom:8px;
+  display:flex; align-items:center; gap:6px; }
+.edu-section ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.edu-section ul li { font-size:0.85rem; color:var(--text); display:flex; gap:8px; line-height:1.5; }
+.edu-section ul li::before { content:'•'; color:var(--primary); font-weight:900; flex-shrink:0; }
+.edu-section p { font-size:0.85rem; color:var(--text); line-height:1.7; }
+.risk-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:99px; font-size:0.72rem; font-weight:800; }
+.risk-tinggi { background:#ffebee; color:var(--danger); }
+.risk-sedang { background:#fff8e1; color:var(--warn); }
+.risk-rendah { background:#e8f5e9; color:var(--accent-dark); }
+
+/* ─── HISTORY ─────────────────────────────────── */
+.history-item {
+  background:#fff; border-radius:14px; padding:16px; margin-bottom:12px;
+  box-shadow:var(--shadow); display:flex; align-items:center; gap:16px;
+  border-left:4px solid var(--primary);
+}
+.history-icon { width:44px; height:44px; border-radius:12px; background:var(--primary-light);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.history-title { font-size:0.9rem; font-weight:800; color:var(--text); }
+.history-date { font-size:0.73rem; color:var(--text-muted); margin-top:2px; }
+.history-pct { font-size:1.1rem; font-weight:900; color:var(--primary); margin-left:auto; }
+
+/* ─── ABOUT ───────────────────────────────────── */
+.about-hero {
+  background:linear-gradient(135deg,#0d2d38,#1a5068);
+  border-radius:var(--radius); padding:32px 24px; text-align:center; color:#fff; margin-bottom:24px;
+}
+.about-hero h2 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:8px; }
+.about-hero p { font-size:0.85rem; opacity:0.8; line-height:1.7; }
+.visi-misi-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.vm-card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+.vm-card h3 { font-size:1rem; font-weight:800; color:var(--primary); margin-bottom:12px; }
+.vm-card p { font-size:0.82rem; color:var(--text); line-height:1.7; }
+.vm-card ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.vm-card ul li { font-size:0.82rem; color:var(--text); display:flex; gap:8px; }
+.vm-card ul li::before { content:'✓'; color:var(--accent-dark); font-weight:900; }
+
+.value-list { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.value-item { background:#fff; border-radius:14px; padding:14px; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:10px; }
+.value-icon { width:36px; height:36px; border-radius:10px; background:var(--primary-light);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.value-text { font-size:0.78rem; font-weight:700; color:var(--text); }
+
+/* ─── EXPORT ──────────────────────────────────── */
+.export-preview {
+  background:#fff; border:2px dashed var(--border); border-radius:var(--radius); padding:28px;
+  margin-bottom:20px;
+}
+.export-preview-header { display:flex; align-items:center; gap:14px; margin-bottom:20px;
+  padding-bottom:16px; border-bottom:2px solid var(--border); }
+.export-logo { width:48px; height:48px; border-radius:12px; overflow:hidden; }
+.export-logo img { width:48px; height:48px; object-fit:cover; }
+.export-brand { font-family:'DM Serif Display',serif; font-size:1.3rem; color:var(--text); }
+.export-sub { font-size:0.7rem; color:var(--text-muted); }
+.export-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.export-meta-item label { font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; display:block; }
+.export-meta-item span { font-size:0.85rem; font-weight:700; color:var(--text); }
+
+/* ─── TOAST ───────────────────────────────────── */
+#toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px);
+  background:#1a2e35; color:#fff; padding:12px 24px; border-radius:12px;
+  font-size:0.85rem; font-weight:700; z-index:9999; transition:transform 0.3s;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ─── RESPONSIVE ──────────────────────────────── */
+@media(max-width:500px){
+  .shortcut-grid { grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .edu-grid { grid-template-columns:1fr 1fr; }
+  .visi-misi-grid { grid-template-columns:1fr; }
+  .value-list { grid-template-columns:1fr; }
+}
+
+/* ─── UTILITY ─────────────────────────────────── */
+.mt-4 { margin-top:16px; }
+.text-center { text-align:center; }
+.text-muted { color:var(--text-muted); font-size:0.82rem; }
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px; font-size:0.7rem; font-weight:800; }
+.badge-primary { background:var(--primary-light); color:var(--primary); }
+.badge-success { background:#e8f5e9; color:var(--accent-dark); }
+.badge-warn { background:#fff8e1; color:#e65100; }
+.badge-danger { background:#ffebee; color:var(--danger); }
+
+.empty-state { text-align:center; padding:48px 24px; }
+.empty-state svg { margin-bottom:16px; }
+.empty-state h3 { font-size:1rem; font-weight:800; color:var(--text); margin-bottom:8px; }
+.empty-state p { font-size:0.82rem; color:var(--text-muted); }
+
+.separator { height:1px; background:var(--border); margin:20px 0; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">
+    <img src="logo.png" alt="EyeCare Logo">
+  </div>
+  <div class="splash-title">EyeCare</div>
+  <div class="splash-sub">Sistem Pakar Mendeteksi Penyakit Mata Menggunakan Metode LVQ</div>
+  <div class="splash-tagline">✦ Deteksi Dini, Lindungi Penglihatanmu ✦</div>
+  <div class="splash-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-wrap">
+  <!-- LOGIN -->
+  <div id="login-card" class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <img src="logo.png" alt="EyeCare Logo">
+      </div>
+      <span class="auth-logo-text">EyeCare</span>
+    </div>
+    <div class="auth-title">Selamat Datang 👋</div>
+    <div class="auth-sub">Masuk untuk memulai deteksi penyakit mata</div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="login-email" placeholder="email@contoh.com" value="demo@eyecare.id">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="login-password" placeholder="••••••••" value="demo1234">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Masuk
+    </button>
+    <div class="auth-divider"><span>atau</span></div>
+    <button class="btn btn-outline" onclick="loginGuest()">Masuk sebagai Tamu</button>
+    <div class="auth-switch">Belum punya akun? <a onclick="showRegister()">Daftar sekarang</a></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="register-card" class="auth-card" style="display:none">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <img src="logo.png" alt="EyeCare Logo">
+      </div>
+      <span class="auth-logo-text">EyeCare</span>
+    </div>
+    <div class="auth-title">Buat Akun Baru</div>
+    <div class="auth-sub">Daftar untuk menyimpan riwayat deteksi</div>
+    <div class="form-group">
+      <label class="form-label">Nama Lengkap</label>
+      <input type="text" class="form-input" id="reg-name" placeholder="Nama kamu">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="reg-email" placeholder="email@contoh.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="reg-pass" placeholder="Min. 8 karakter">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Konfirmasi Password</label>
+      <input type="password" class="form-input" id="reg-pass2" placeholder="Ulangi password">
+    </div>
+    <button class="btn btn-primary" onclick="doRegister()">Daftar Sekarang</button>
+    <div class="auth-switch">Sudah punya akun? <a onclick="showLogin()">Masuk</a></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- OVERLAY -->
+  <div id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="logo.png" alt="EyeCare Logo">
+      </div>
+      <div>
+        <div class="sidebar-brand">EyeCare</div>
+        <div class="sidebar-tagline">Deteksi Dini Penyakit Mata</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">D</div>
+      <div>
+        <div class="user-name" id="sidebar-name">Demo User</div>
+        <div class="user-email" id="sidebar-email">demo@eyecare.id</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="navigate('quiz')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Deteksi Penyakit
+      </div>
+      <div class="nav-item" onclick="navigate('result')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Hasil Analisis
+      </div>
+      <div class="nav-item" onclick="navigate('edu')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Edukasi Penyakit
+      </div>
+      <div class="nav-item" onclick="navigate('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Riwayat
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" onclick="navigate('export')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export PDF
+      </div>
+      <div class="nav-item" onclick="navigate('about')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Tentang Aplikasi
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" onclick="doLogout()" style="color:#ef5350">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-badge">LVQ</div>
+    </div>
+
+    <!-- PAGES -->
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="greeting" id="greet-name">Halo, User 👋</div>
+      <div class="greeting-sub">Periksa kesehatan matamu hari ini!</div>
+      <div class="info-banner">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><circle cx="20" cy="20" r="7" fill="rgba(255,255,255,0.9)"/><circle cx="23" cy="17" r="3" fill="#29B6D5"/></svg>
+        <div class="info-banner-text">
+          <h3>Sistem Pakar EyeCare</h3>
+          <p>Deteksi dini penyakit mata menggunakan algoritma LVQ (Learning Vector Quantization) dengan tingkat akurasi tinggi.</p>
+        </div>
+      </div>
+      <div class="section-title">Mulai Cepat</div>
+      <div class="shortcut-grid">
+        <div class="shortcut-card" onclick="navigate('quiz')">
+          <div class="shortcut-icon" style="background:#e0f7fd">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#29B6D5" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="shortcut-label">Mulai Deteksi</div>
+        </div>
+        <div class="shortcut-card" onclick="navigate('result')">
+          <div class="shortcut-icon" style="background:#e8f5e9">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="shortcut-label">Lihat Hasil</div>
+        </div>
+        <div class="shortcut-card" onclick="navigate('edu')">
+          <div class="shortcut-icon" style="background:#fff8e1">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9800" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <div class="shortcut-label">Edukasi</div>
+        </div>
+      </div>
+      <div class="section-title">Statistik</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e0f7fd">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#29B6D5" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div><div class="stat-num" id="stat-deteksi">3</div><div class="stat-label">Total Deteksi</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8f5e9">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div><div class="stat-num">8</div><div class="stat-label">Jenis Penyakit</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fff8e1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9800" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div><div class="stat-num">16</div><div class="stat-label">Pertanyaan</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fce4ec">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div><div class="stat-num">97%</div><div class="stat-label">Akurasi LVQ</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="page" id="page-quiz">
+      <div class="quiz-header">
+        <div class="quiz-progress-wrap">
+          <div class="quiz-progress-label" id="q-progress-label">Pertanyaan 1 dari 16</div>
+          <div class="quiz-progress-label" id="q-cat-badge"></div>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="q-bar" style="width:6.25%"></div></div>
+      </div>
+      <div class="card">
+        <div class="quiz-category" id="q-category">Penglihatan</div>
+        <div class="quiz-question" id="q-question">Apakah kamu mengalami penglihatan kabur?</div>
+        <div class="answer-options" id="q-options"></div>
+        <div class="quiz-nav">
+          <button class="btn btn-outline btn-sm" id="q-back" onclick="quizBack()">← Kembali</button>
+          <button class="btn btn-primary btn-sm" id="q-next" onclick="quizNext()">Lanjut →</button>
+        </div>
+      </div>
+      <div class="text-muted text-center mt-4">Jawab jujur sesuai kondisi yang kamu rasakan</div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="page" id="page-result">
+      <div id="result-no-data" class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" fill="#e0f7fd"/><circle cx="32" cy="32" r="14" stroke="#29B6D5" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#29B6D5"/></svg>
+        <h3>Belum Ada Hasil</h3>
+        <p>Lakukan deteksi terlebih dahulu untuk melihat hasil analisis</p>
+        <button class="btn btn-primary btn-sm mt-4" onclick="navigate('quiz')">Mulai Deteksi</button>
+      </div>
+      <div id="result-data" style="display:none">
+        <div class="result-hero">
+          <div class="result-hero-label">Hasil Analisis LVQ</div>
+          <div class="result-hero-title" id="result-main-disease">Kelainan Refraksi</div>
+          <div class="result-hero-sub" id="result-main-pct">Kemungkinan tertinggi: 72%</div>
+        </div>
+        <div class="recommendation-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFB74D" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div><strong style="font-size:0.85rem">Rekomendasi:</strong><p style="font-size:0.82rem;margin-top:4px;color:var(--text)" id="result-rec">Disarankan untuk melakukan pemeriksaan ke dokter mata dalam waktu dekat.</p></div>
+        </div>
+        <div class="section-title">📊 Detail Analisis</div>
+        <div id="result-list"></div>
+        <button class="btn btn-primary" onclick="navigate('export')" style="width:100%;margin-top:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export ke PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- EDUCATION -->
+    <div class="page" id="page-edu">
+      <div id="edu-list-view">
+        <div class="info-banner" style="margin-bottom:20px">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <div class="info-banner-text"><h3>Edukasi Penyakit Mata</h3><p>Kenali jenis penyakit mata dan cara pencegahannya</p></div>
+        </div>
+        <div class="edu-grid" id="edu-grid"></div>
+      </div>
+      <div id="edu-detail-view" style="display:none"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="section-title">📋 Riwayat Deteksi</div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="page" id="page-export">
+      <div class="section-title">📄 Export Laporan PDF</div>
+      <div class="export-preview" id="export-preview">
+        <div class="export-preview-header">
+          <div class="export-logo">
+            <img src="logo.png" alt="EyeCare Logo">
+          </div>
+          <div>
+            <div class="export-brand">EyeCare</div>
+            <div class="export-sub">Sistem Pakar Deteksi Penyakit Mata · LVQ</div>
+          </div>
+        </div>
+        <div class="export-meta" id="export-meta"></div>
+        <div class="separator"></div>
+        <div class="section-title" style="font-size:0.85rem">Hasil Analisis</div>
+        <div id="export-result-preview"></div>
+        <div class="separator"></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-align:center">Laporan dihasilkan oleh EyeCare · Sistem Pakar Berbasis LVQ</div>
+      </div>
+      <button class="btn btn-primary" onclick="exportPDF()" style="width:100%">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PDF
+      </button>
+      <div id="export-no-data" class="empty-state" style="display:none">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" fill="#e0f7fd"/><path d="M20 32h24M32 20v24" stroke="#29B6D5" stroke-width="3" stroke-linecap="round"/></svg>
+        <h3>Belum Ada Data</h3>
+        <p>Lakukan deteksi terlebih dahulu</p>
+        <button class="btn btn-primary btn-sm mt-4" onclick="navigate('quiz')">Mulai Deteksi</button>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="page" id="page-about">
+      <div class="about-hero">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style="margin-bottom:12px"><circle cx="28" cy="28" r="22" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/><circle cx="28" cy="28" r="10" fill="rgba(255,255,255,0.9)"/><circle cx="32" cy="24" r="4" fill="#29B6D5"/></svg>
+        <h2>EyeCare</h2>
+        <p>Aplikasi sistem cerdas untuk mendeteksi kemungkinan penyakit mata berdasarkan gejala menggunakan metode LVQ, sehingga pengguna dapat melakukan pencegahan lebih dini.</p>
+      </div>
+      <div class="visi-misi-grid">
+        <div class="vm-card">
+          <h3>Visi</h3>
+          <p>Menjadi aplikasi deteksi dini penyakit mata yang mudah diakses dan membantu meningkatkan kesadaran kesehatan penglihatan.</p>
+        </div>
+        <div class="vm-card">
+          <h3>Misi</h3>
+          <ul>
+            <li>Deteksi awal secara praktis</li>
+            <li>Edukasi kesehatan mata</li>
+            <li>Kenali gejala lebih awal</li>
+            <li>Kurangi keterlambatan</li>
+          </ul>
+        </div>
+      </div>
+      <div class="section-title">Keunggulan EyeCare</div>
+      <div class="value-list">
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#29B6D5" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="value-text">UI Modern Medical</div></div>
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="value-text">Login & Data User</div></div>
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF9800" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="value-text">Visualisasi Hasil</div></div>
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="value-text">Edukasi + Gambar</div></div>
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9c27b0" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="value-text">AI Berbasis LVQ</div></div>
+        <div class="value-item"><div class="value-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#29B6D5" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="value-text">Export PDF</div></div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-title">Metode LVQ</div>
+        <p style="font-size:0.83rem;color:var(--text);line-height:1.7">Learning Vector Quantization (LVQ) adalah algoritma klasifikasi berbasis jaringan saraf tiruan yang mengelompokkan data berdasarkan kemiripan dengan data latih. Input jawaban kuisioner (0–3) dinormalisasi, kemudian dihitung jarak Euclidean ke vektor prototipe untuk setiap kelas penyakit. Penyakit dengan jarak terdekat mendapat confidence score tertinggi.</p>
+      </div>
+    </div>
+
+  </div><!-- end #main -->
+</div><!-- end #app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────
+let currentUser = null;
+let quizAnswers = new Array(16).fill(null);
+let currentQ = 0;
+let lastResult = null;
+let historyData = [
+  { date: '2 Mei 2026', disease: 'Kelainan Refraksi', pct: 72 },
+  { date: '25 Apr 2026', disease: 'Konjungtivitis', pct: 58 },
+  { date: '10 Apr 2026', disease: 'Katarak', pct: 34 },
+];
+
+const QUESTIONS = [
+  { cat: 'A. Penglihatan', text: 'Seberapa sering kamu mengalami penglihatan kabur?' },
+  { cat: 'A. Penglihatan', text: 'Seberapa sering kamu kesulitan melihat objek jauh?' },
+  { cat: 'A. Penglihatan', text: 'Seberapa sering kamu kesulitan membaca tulisan dekat?' },
+  { cat: 'A. Penglihatan', text: 'Seberapa sering kamu melihat bayangan ganda?' },
+  { cat: 'B. Kondisi Mata', text: 'Seberapa sering mata kamu tampak merah?' },
+  { cat: 'B. Kondisi Mata', text: 'Seberapa sering kamu merasakan nyeri atau perih di mata?' },
+  { cat: 'B. Kondisi Mata', text: 'Seberapa sering mata kamu terasa kering atau berair?' },
+  { cat: 'B. Kondisi Mata', text: 'Seberapa sering kamu merasakan sensasi benda asing di mata?' },
+  { cat: 'C. Sensitivitas', text: 'Seberapa sering kamu sensitif terhadap cahaya terang?' },
+  { cat: 'C. Sensitivitas', text: 'Seberapa sering kamu sulit melihat di tempat gelap/malam hari?' },
+  { cat: 'D. Gejala Spesifik', text: 'Seberapa sering kamu melihat floaters (bintik/benang melayang)?' },
+  { cat: 'D. Gejala Spesifik', text: 'Seberapa sering kamu mengalami penglihatan sebagian yang hilang?' },
+  { cat: 'D. Gejala Spesifik', text: 'Seberapa sering kamu melihat perubahan warna pada objek?' },
+  { cat: 'D. Gejala Spesifik', text: 'Seberapa sering kamu menyipitkan mata saat melihat sesuatu?' },
+  { cat: 'E. Riwayat & Kebiasaan', text: 'Apakah kamu menggunakan gadget lebih dari 6 jam per hari?' },
+  { cat: 'E. Riwayat & Kebiasaan', text: 'Apakah kamu memiliki riwayat gangguan penglihatan sebelumnya?' },
+];
+
+const ANSWERS = [
+  { label: 'Tidak Pernah', score: 0 },
+  { label: 'Jarang', score: 1 },
+  { label: 'Sering', score: 2 },
+  { label: 'Sangat Sering', score: 3 },
+];
+
+// LVQ prototype vectors (simplified for demo)
+const LVQ_PROTOTYPES = [
+  { name: 'Kelainan Refraksi', vec: [2,2,2,1,0,0,0,0,1,1,0,0,0,2,2,1] },
+  { name: 'Katarak',           vec: [2,1,1,1,0,0,1,0,2,2,1,1,1,1,0,1] },
+  { name: 'Glaukoma',          vec: [1,1,1,0,1,2,0,0,2,1,1,2,0,0,0,1] },
+  { name: 'Konjungtivitis',    vec: [0,0,0,0,3,2,2,2,1,0,0,0,0,0,1,0] },
+  { name: 'Gangguan Retina',   vec: [1,1,0,1,0,0,0,0,0,1,2,2,2,0,0,1] },
+  { name: 'Kelainan Kornea',   vec: [2,0,0,1,1,2,1,2,2,0,0,0,1,0,0,0] },
+  { name: 'Amblyopia',         vec: [1,2,1,1,0,0,0,0,0,1,0,1,0,2,1,1] },
+  { name: 'Buta Warna',        vec: [0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,1] },
+];
+
+// ─── AUTH ─────────────────────────────────────────────────────────
+function showRegister() {
+  document.getElementById('login-card').style.display = 'none';
+  document.getElementById('register-card').style.display = 'block';
+}
+function showLogin() {
+  document.getElementById('register-card').style.display = 'none';
+  document.getElementById('login-card').style.display = 'block';
+}
+function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) { showToast('Isi email dan password!'); return; }
+  const name = email.split('@')[0];
+  loginUser({ name: capitalizeFirst(name), email });
+}
+function loginGuest() {
+  loginUser({ name: 'Tamu', email: 'guest@eyecare.id' });
+}
+function doRegister() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!name || !email || !pass) { showToast('Lengkapi semua field!'); return; }
+  if (pass !== pass2) { showToast('Password tidak cocok!'); return; }
+  loginUser({ name, email });
+}
+function loginUser(user) {
+  currentUser = user;
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('sidebar-name').textContent = user.name;
+  document.getElementById('sidebar-email').textContent = user.email;
+  document.getElementById('sidebar-avatar').textContent = user.name[0].toUpperCase();
+  document.getElementById('greet-name').textContent = `Halo, ${user.name.split(' ')[0]} 👋`;
+  renderHistory();
+  renderEduGrid();
+  showToast(`Selamat datang, ${user.name}!`);
+}
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('auth-wrap').style.display = 'flex';
+  closeSidebar();
+  navigate('dashboard');
+}
+function capitalizeFirst(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────
+const PAGE_TITLES = {
+  dashboard: 'Dashboard', quiz: 'Deteksi Penyakit', result: 'Hasil Analisis',
+  edu: 'Edukasi Penyakit', history: 'Riwayat', export: 'Export PDF', about: 'Tentang Aplikasi'
+};
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page] || page;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active');
+  });
+  closeSidebar();
+  if (page === 'quiz') initQuiz();
+  if (page === 'result') renderResult();
+  if (page === 'export') renderExport();
+  if (page === 'history') renderHistory();
+  if (page === 'edu') { showEduList(); }
+  window.scrollTo(0, 0);
+}
+
+// ─── QUIZ ─────────────────────────────────────────────────────────
+function initQuiz() {
+  quizAnswers = new Array(16).fill(null);
+  currentQ = 0;
+  renderQuestion();
+}
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-category').textContent = q.cat;
+  document.getElementById('q-question').textContent = q.text;
+  document.getElementById('q-progress-label').textContent = `Pertanyaan ${currentQ + 1} dari 16`;
+  document.getElementById('q-bar').style.width = ((currentQ + 1) / 16 * 100) + '%';
+  document.getElementById('q-back').disabled = currentQ === 0;
+
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  ANSWERS.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn' + (quizAnswers[currentQ] === i ? ' selected' : '');
+    btn.innerHTML = `<span class="ans-score">${a.score}</span>${a.label}`;
+    btn.onclick = () => { quizAnswers[currentQ] = i; renderQuestion(); };
+    opts.appendChild(btn);
+  });
+  const isLast = currentQ === 15;
+  document.getElementById('q-next').textContent = isLast ? '✓ Lihat Hasil' : 'Lanjut →';
+}
+function quizNext() {
+  if (quizAnswers[currentQ] === null) { showToast('Pilih salah satu jawaban!'); return; }
+  if (currentQ < 15) { currentQ++; renderQuestion(); }
+  else { runLVQ(); navigate('result'); }
+}
+function quizBack() {
+  if (currentQ > 0) { currentQ--; renderQuestion(); }
+}
+
+// ─── LVQ ALGORITHM ────────────────────────────────────────────────
+function runLVQ() {
+  const input = quizAnswers.map(a => a === null ? 0 : ANSWERS[a].score);
+  // Normalize 0–3 → 0–1
+  const norm = input.map(v => v / 3);
+  // Euclidean distance to each prototype
+  const distances = LVQ_PROTOTYPES.map(p => {
+    const normVec = p.vec.map(v => v / 3);
+    const dist = Math.sqrt(normVec.reduce((s, v, i) => s + Math.pow(v - norm[i], 2), 0));
+    return { name: p.name, dist };
+  });
+  // Convert distance to similarity score (inverse)
+  const maxDist = Math.max(...distances.map(d => d.dist)) || 1;
+  const scores = distances.map(d => ({ name: d.name, score: (1 - d.dist / maxDist) }));
+  const total = scores.reduce((s, d) => s + d.score, 0);
+  const results = scores.map(d => ({ name: d.name, pct: Math.round(d.score / total * 100) }))
+    .sort((a, b) => b.pct - a.pct);
+
+  lastResult = results;
+  // Add to history
+  historyData.unshift({ date: todayStr(), disease: results[0].name, pct: results[0].pct });
+}
+function todayStr() {
+  return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ─── RESULT ───────────────────────────────────────────────────────
+const COLOR_MAP = { 'Kelainan Refraksi':'#29B6D5','Katarak':'#FF9800','Glaukoma':'#EF5350','Konjungtivitis':'#81C784','Gangguan Retina':'#9C27B0','Kelainan Kornea':'#F06292','Amblyopia':'#26A69A','Buta Warna':'#5C6BC0' };
+function renderResult() {
+  const noData = document.getElementById('result-no-data');
+  const data = document.getElementById('result-data');
+  if (!lastResult) { noData.style.display='block'; data.style.display='none'; return; }
+  noData.style.display='none'; data.style.display='block';
+  const top = lastResult[0];
+  document.getElementById('result-main-disease').textContent = top.name;
+  document.getElementById('result-main-pct').textContent = `Kemungkinan tertinggi: ${top.pct}%`;
+  const rec = top.pct >= 60 ? 'Disarankan segera memeriksakan diri ke dokter mata.' : top.pct >= 40 ? 'Disarankan melakukan pemeriksaan mata dalam waktu dekat.' : 'Kondisi relatif baik. Tetap jaga kesehatan mata Anda secara rutin.';
+  document.getElementById('result-rec').textContent = rec;
+  const list = document.getElementById('result-list');
+  list.innerHTML = '';
+  lastResult.forEach((r, i) => {
+    const color = i === 0 ? (r.pct >= 60 ? 'var(--danger)' : r.pct >= 40 ? 'var(--warn)' : 'var(--accent)') : (COLOR_MAP[r.name] || '#29B6D5');
+    const div = document.createElement('div');
+    div.className = 'disease-result' + (i === 0 ? ' highlight' : '');
+    div.innerHTML = `
+      <div class="disease-result-top">
+        <span class="disease-name">${i===0?'':''}${r.name}</span>
+        <span class="disease-pct" style="color:${color}">${r.pct}%</span>
+      </div>
+      <div class="disease-bar"><div class="disease-bar-fill" style="width:0%;background:${color}" data-width="${r.pct}%"></div></div>
+    `;
+    list.appendChild(div);
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.disease-bar-fill').forEach(b => { b.style.width = b.dataset.width; });
+  }, 100);
+}
+
+// ─── EDUCATION ────────────────────────────────────────────────────
+const DISEASES = [
+  {
+    id:'katarak', name:'Katarak', color:'#FF9800', risk:'sedang',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><ellipse cx="16" cy="16" rx="7" ry="10" stroke="white" stroke-width="2" opacity="0.7"/>',
+    desc:'Katarak adalah kondisi di mana lensa mata menjadi keruh sehingga penglihatan kabur seperti melihat melalui kaca berembun.',
+    gejala:['Penglihatan kabur dan buram','Silau saat melihat cahaya terang','Sulit melihat di malam hari','Warna tampak pudar'],
+    penyebab:['Penuaan alami','Paparan sinar UV berlebih','Diabetes mellitus','Trauma pada mata'],
+    pencegahan:['Gunakan kacamata pelindung UV','Konsumsi makanan bergizi','Kontrol gula darah rutin'],
+    solusi:['Operasi katarak (fakoemulsifikasi)','Pemasangan lensa intraokular','Kontrol rutin ke dokter mata'],
+  },
+  {
+    id:'glaukoma', name:'Glaukoma', color:'#EF5350', risk:'tinggi',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="white" opacity="0.5"/><line x1="16" y1="10" x2="16" y2="22" stroke="white" stroke-width="2"/>',
+    desc:'Glaukoma adalah kerusakan saraf mata akibat tekanan intraokular yang tinggi, yang dapat menyebabkan kebutaan permanen jika tidak ditangani.',
+    gejala:['Penglihatan tepi menyempit','Nyeri kepala dan mata','Mual dan muntah','Melihat lingkaran pelangi di sekitar cahaya'],
+    penyebab:['Tekanan bola mata tinggi','Faktor genetik','Usia di atas 60 tahun','Diabetes dan hipertensi'],
+    pencegahan:['Periksa tekanan mata rutin','Hindari konsumsi kafein berlebihan','Olahraga teratur'],
+    solusi:['Tetes mata penurun tekanan','Laser trabekuloplasty','Operasi trabekulektomi'],
+  },
+  {
+    id:'konjungtivitis', name:'Konjungtivitis', color:'#81C784', risk:'rendah',
+    icon:'<ellipse cx="16" cy="16" rx="12" ry="8" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="4" fill="white"/>',
+    desc:'Konjungtivitis atau mata merah adalah peradangan pada konjungtiva akibat infeksi bakteri, virus, atau reaksi alergi.',
+    gejala:['Mata berwarna merah','Keluar kotoran atau nanah','Gatal dan berair','Bengkak pada kelopak mata'],
+    penyebab:['Infeksi bakteri atau virus','Alergi (debu, serbuk, bulu hewan)','Iritasi kimia atau asap','Penggunaan lensa kontak yang tidak bersih'],
+    pencegahan:['Cuci tangan secara teratur','Hindari menyentuh mata dengan tangan kotor','Ganti handuk secara berkala'],
+    solusi:['Tetes mata antibiotik (bakteri)','Antihistamin (alergi)','Kompres dingin untuk mengurangi gejala'],
+  },
+  {
+    id:'refraksi', name:'Kelainan Refraksi', color:'#29B6D5', risk:'rendah',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="white"/><path d="M8 16 Q16 8 24 16" stroke="white" stroke-width="1.5" fill="none"/>',
+    desc:'Kelainan refraksi adalah gangguan pada kemampuan mata untuk memfokuskan cahaya secara tepat, mencakup rabun jauh, rabun dekat, dan astigmatisme.',
+    gejala:['Penglihatan kabur (jauh/dekat)','Sering menyipitkan mata','Sakit kepala setelah membaca','Mata lelah dan tegang'],
+    penyebab:['Bentuk bola mata tidak normal','Kelengkungan kornea tidak rata','Perubahan lensa mata','Faktor genetik'],
+    pencegahan:['Baca dengan jarak dan cahaya yang cukup','Istirahatkan mata setiap 20 menit','Konsumsi vitamin A','Periksa mata secara rutin'],
+    solusi:['Kacamata korektif','Lensa kontak','Operasi LASIK atau PRK'],
+  },
+  {
+    id:'retina', name:'Gangguan Retina', color:'#9C27B0', risk:'tinggi',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="3" fill="white"/><path d="M10 10 Q16 6 22 10" stroke="white" stroke-width="1.5" fill="none"/><path d="M10 22 Q16 26 22 22" stroke="white" stroke-width="1.5" fill="none"/>',
+    desc:'Gangguan retina mencakup berbagai kondisi yang merusak retina, termasuk retinopati diabetik, ablasi retina, dan degenerasi makula.',
+    gejala:['Floaters (bintik melayang)','Kilatan cahaya','Penglihatan gelap atau hilang sebagian','Penglihatan tengah yang buram'],
+    penyebab:['Diabetes mellitus tidak terkontrol','Trauma atau cedera mata','Usia lanjut','Tekanan darah tinggi'],
+    pencegahan:['Kontrol gula darah dan tekanan darah','Hindari merokok','Periksakan retina secara rutin'],
+    solusi:['Injeksi anti-VEGF','Fotokoagulasi laser','Operasi vitrektomi'],
+  },
+  {
+    id:'kornea', name:'Kelainan Kornea', color:'#F06292', risk:'sedang',
+    icon:'<ellipse cx="16" cy="16" rx="10" ry="13" stroke="white" stroke-width="2"/><ellipse cx="16" cy="16" rx="5" ry="7" fill="white" opacity="0.5"/>',
+    desc:'Kelainan kornea adalah gangguan pada lapisan transparan bagian depan mata yang menyebabkan penglihatan kabur, silau, dan nyeri.',
+    gejala:['Mata terasa nyeri dan berair','Silau terhadap cahaya','Penglihatan kabur atau berbayang','Kemerahan pada mata'],
+    penyebab:['Infeksi (bakteri, virus, jamur)','Trauma atau luka','Penyakit autoimun','Keratokonus (kornea berbentuk kerucut)'],
+    pencegahan:['Jangan menyentuh mata dengan tangan kotor','Rawat lensa kontak dengan baik','Gunakan kacamata pelindung'],
+    solusi:['Tetes mata antibiotik/antivirus','Transplantasi kornea (keratoplasty)','Lensa kontak khusus untuk keratokonus'],
+  },
+  {
+    id:'amblyopia', name:'Amblyopia', color:'#26A69A', risk:'sedang',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="6" stroke="white" stroke-width="1.5"/><line x1="8" y1="8" x2="12" y2="12" stroke="white" stroke-width="2"/>',
+    desc:'Amblyopia atau mata malas adalah kondisi di mana satu mata memiliki penglihatan yang jauh lebih buruk daripada mata lainnya akibat perkembangan penglihatan yang tidak optimal.',
+    gejala:['Satu mata menyimpang (juling)','Sulit memperkirakan kedalaman','Menutup atau menyipitkan satu mata','Kepala sering miring saat melihat'],
+    penyebab:['Juling (strabismus)','Kelainan refraksi yang berbeda antar mata','Kekeruhan lensa sejak lahir','Kelopak mata turun (ptosis)'],
+    pencegahan:['Pemeriksaan mata dini pada anak','Koreksi kelainan refraksi sejak dini'],
+    solusi:['Menutup mata yang sehat (patch)','Kacamata atau lensa kontak','Tetes mata atropin','Terapi penglihatan'],
+  },
+  {
+    id:'butawarna', name:'Buta Warna', color:'#5C6BC0', risk:'rendah',
+    icon:'<circle cx="16" cy="16" r="12" stroke="white" stroke-width="2"/><path d="M10 13 L13 16 L22 10" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="10" cy="19" r="2" fill="white"/><circle cx="16" cy="21" r="2" fill="white" opacity="0.6"/><circle cx="22" cy="18" r="2" fill="white" opacity="0.3"/>',
+    desc:'Buta warna adalah kondisi di mana seseorang kesulitan membedakan warna tertentu, paling umum merah-hijau, akibat gangguan pada sel reseptor warna di retina.',
+    gejala:['Sulit membedakan warna merah dan hijau','Warna tampak lebih pucat','Kesulitan membaca grafik/peta berwarna','Kesulitan memilih pakaian berdasarkan warna'],
+    penyebab:['Faktor genetik (X-linked)','Kerusakan retina atau saraf optik','Efek samping obat tertentu','Penuaan'],
+    pencegahan:['Tidak dapat sepenuhnya dicegah (genetik)','Lindungi mata dari paparan bahan kimia'],
+    solusi:['Kacamata lensa khusus EnChroma','Aplikasi bantu pengenalan warna','Adaptasi dan strategi kompensasi warna'],
+  },
+];
+
+function renderEduGrid() {
+  const grid = document.getElementById('edu-grid');
+  grid.innerHTML = '';
+  DISEASES.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'edu-card';
+    card.innerHTML = `
+      <div class="edu-img">
+        <img src="${d.id}.jpg" alt="${d.name}"
+          onerror="this.parentElement.style.background='linear-gradient(135deg,${d.color}dd,${d.color}66)';this.style.display='none'">
+      </div>
+      <div class="edu-card-body">
+        <div class="edu-card-title">${d.name}</div>
+        <div class="edu-card-desc">${d.desc.substring(0,60)}...</div>
+      </div>
+    `;
+    card.onclick = () => showEduDetail(d);
+    grid.appendChild(card);
+  });
+}
+function showEduList() {
+  document.getElementById('edu-list-view').style.display = 'block';
+  document.getElementById('edu-detail-view').style.display = 'none';
+}
+function showEduDetail(d) {
+  document.getElementById('edu-list-view').style.display = 'none';
+  const detail = document.getElementById('edu-detail-view');
+  detail.style.display = 'block';
+  detail.innerHTML = `
+    <div class="edu-detail-header">
+      <button class="back-btn" onclick="showEduList()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text)">${d.name}</div>
+        <span class="risk-badge risk-${d.risk}">${d.risk === 'tinggi' ? '⚠️ Risiko Tinggi' : d.risk === 'sedang' ? '⚠ Risiko Sedang' : '✓ Risiko Rendah'}</span>
+      </div>
+    </div>
+    <div class="edu-detail-img">
+      <img src="${d.id}.jpg" alt="${d.name}" style="width:100%;height:200px;object-fit:cover;display:block;"
+        onerror="this.parentElement.style.background='linear-gradient(135deg,${d.color}cc,${d.color}66)';this.style.display='none'">
+    </div>
+    <div class="edu-section"><p>${d.desc}</p></div>
+    <div class="edu-section">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Gejala</h3>
+      <ul>${d.gejala.map(g=>`<li>${g}</li>`).join('')}</ul>
+    </div>
+    <div class="edu-section">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/></svg>Penyebab</h3>
+      <ul>${d.penyebab.map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>
+    <div class="edu-section">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Pencegahan</h3>
+      <ul>${d.pencegahan.map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>
+    <div class="edu-section">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>Solusi & Pengobatan</h3>
+      <ul>${d.solusi.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+  `;
+  window.scrollTo(0,0);
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  if (historyData.length === 0) {
+    list.innerHTML = `<div class="empty-state"><svg width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" fill="#e0f7fd"/><circle cx="32" cy="32" r="12" stroke="#29B6D5" stroke-width="2.5"/></svg><h3>Belum Ada Riwayat</h3><p>Lakukan deteksi untuk melihat riwayat di sini</p></div>`;
+    return;
+  }
+  list.innerHTML = '';
+  historyData.forEach((h, i) => {
+    const color = h.pct >= 60 ? 'var(--danger)' : h.pct >= 40 ? 'var(--warn)' : 'var(--accent)';
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.style.borderLeftColor = color;
+    item.innerHTML = `
+      <div class="history-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#29B6D5" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div>
+        <div class="history-title">${h.disease}</div>
+        <div class="history-date">${h.date}</div>
+      </div>
+      <div class="history-pct" style="color:${color}">${h.pct}%</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────
+function renderExport() {
+  const preview = document.getElementById('export-preview');
+  const noData = document.getElementById('export-no-data');
+  if (!lastResult || !currentUser) { preview.style.display='none'; noData.style.display='block'; return; }
+  preview.style.display='block'; noData.style.display='none';
+  document.getElementById('export-meta').innerHTML = `
+    <div class="export-meta-item"><label>Nama</label><span>${currentUser.name}</span></div>
+    <div class="export-meta-item"><label>Email</label><span>${currentUser.email}</span></div>
+    <div class="export-meta-item"><label>Tanggal</label><span>${todayStr()}</span></div>
+    <div class="export-meta-item"><label>Metode</label><span>LVQ Neural Network</span></div>
+  `;
+  const prev = document.getElementById('export-result-preview');
+  prev.innerHTML = lastResult.slice(0,4).map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:0.82rem;font-weight:600">${r.name}</span>
+      <span style="font-size:0.9rem;font-weight:800;color:${r.pct>=60?'var(--danger)':r.pct>=40?'var(--warn)':'var(--accent)'}">${r.pct}%</span>
+    </div>
+  `).join('');
+}
+
+function exportPDF() {
+  if (!lastResult) { showToast('Tidak ada data untuk diexport!'); return; }
+  // Build printable content
+  const w = window.open('', '_blank');
+  const top = lastResult[0];
+  const rec = top.pct >= 60 ? 'Segera periksakan diri ke dokter mata.' : top.pct >= 40 ? 'Disarankan periksa mata dalam waktu dekat.' : 'Kondisi relatif baik. Tetap jaga kesehatan mata.';
+  w.document.write(`
+    <html><head><title>Laporan EyeCare</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:40px;color:#1a2e35;max-width:700px;margin:0 auto}
+      .header{display:flex;align-items:center;gap:16px;border-bottom:3px solid #29B6D5;padding-bottom:16px;margin-bottom:24px}
+      .logo{width:48px;height:48px;background:#29B6D5;border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem}
+      h1{margin:0;font-size:1.6rem;color:#1a2e35}
+      .sub{font-size:0.75rem;color:#6b8e97}
+      .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;background:#f0fbfe;padding:16px;border-radius:10px}
+      .meta-item label{display:block;font-size:0.65rem;font-weight:700;color:#6b8e97;text-transform:uppercase}
+      .meta-item span{font-size:0.9rem;font-weight:700}
+      .section-title{font-size:1rem;font-weight:800;margin:20px 0 10px;color:#29B6D5}
+      .result-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e0f7fd}
+      .result-row:first-child{background:#e0f7fd;padding:10px 12px;border-radius:8px;border-bottom:none;margin-bottom:6px}
+      .rec{background:#fff8e1;border:2px solid #FFB74D;border-radius:10px;padding:16px;margin-top:20px}
+      .footer{text-align:center;font-size:0.7rem;color:#6b8e97;margin-top:40px;padding-top:16px;border-top:1px solid #e0f7fd}
+      @media print{body{padding:20px}}
+    </style></head><body>
+    <div class="header">
+      <img src="logo.png" alt="Logo" style="width:48px;height:48px;border-radius:12px;object-fit:cover;">
+      <div><h1>EyeCare</h1><div class="sub">Sistem Pakar Deteksi Penyakit Mata · Metode LVQ</div></div>
+    </div>
+    <div class="section-title">Informasi Pasien</div>
+    <div class="meta-grid">
+      <div class="meta-item"><label>Nama</label><span>${currentUser.name}</span></div>
+      <div class="meta-item"><label>Email</label><span>${currentUser.email}</span></div>
+      <div class="meta-item"><label>Tanggal</label><span>${todayStr()}</span></div>
+      <div class="meta-item"><label>Metode</label><span>LVQ Neural Network</span></div>
+    </div>
+    <div class="section-title">Hasil Analisis</div>
+    ${lastResult.map((r,i)=>`
+      <div class="result-row ${i===0?'':''}" style="${i===0?'font-weight:900;':''}">
+        <span>${i===0?'⭐ ':''}${r.name}</span>
+        <span style="color:${r.pct>=60?'#EF5350':r.pct>=40?'#FFB74D':'#81C784'};font-weight:800">${r.pct}%</span>
+      </div>
+    `).join('')}
+    <div class="rec">
+      <strong>💡 Rekomendasi:</strong><br><br>${rec}
+    </div>
+    <div class="footer">Laporan ini dihasilkan oleh EyeCare · Sistem Pakar Berbasis LVQ<br>Bukan pengganti diagnosis medis profesional</div>
+    </body></html>
+  `);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+  showToast('Membuka jendela print PDF...');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  // After splash, show auth
+  setTimeout(() => {
+    document.getElementById('auth-wrap').style.display = 'flex';
+  }, 3000);
+  // Init edu grid (even before login for when they reach it)
+  renderEduGrid();
+});
+</script>
+</body>
+</html>
